@@ -1,172 +1,148 @@
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
 template <typename T>
-struct Elem
+struct Node
 {
     T data;
-    Elem<T>* next;
-    Elem<T>* prev;
+    Node<T>* next;
 };
 
 template <typename T>
-class List
+class Stack
 {
-    Elem<T>* Head;
-    Elem<T>* Tail;
+    Node<T>* Head;
     int Count;
 
 public:
-    // Конструктор
-    List()
+    Stack()
     {
-        Head = Tail = nullptr;
+        Head = nullptr;
         Count = 0;
     }
 
-    // Конструктор копирования
-    List(const List<T>& L)
+    Stack(const Stack<T>& S)
     {
-        Head = Tail = nullptr;
+        Head = nullptr;
         Count = 0;
 
-        Elem<T>* temp = L.Head;
+        if (S.Head == nullptr) return;
+
+        Node<T>* temp = S.Head;
+        Stack<T> tmp;
+
         while (temp)
         {
-            AddTail(temp->data);
+            tmp.push(temp->data);
             temp = temp->next;
+        }
+
+        while (!tmp.isEmpty())
+        {
+            push(tmp.top());
+            tmp.pop();
         }
     }
 
-    // Деструктор
-    ~List()
+    ~Stack()
     {
-        DelAll();
+        clear();
     }
 
-    int GetCount() const
+    bool isEmpty() const
+    {
+        return Head == nullptr;
+    }
+
+    int size() const
     {
         return Count;
     }
 
-    // Удалить весь список
-    void DelAll()
+    void push(const T& value)
     {
-        while (Count)
-            Del(1);
-    }
-
-    void Del(int pos)
-    {
-        if (pos < 1 || pos > Count) return;
-
-        Elem<T>* cur = Head;
-        for (int i = 1; i < pos; i++)
-            cur = cur->next;
-
-        if (cur->prev) cur->prev->next = cur->next;
-        if (cur->next) cur->next->prev = cur->prev;
-
-        if (cur == Head) Head = cur->next;
-        if (cur == Tail) Tail = cur->prev;
-
-        delete cur;
-        Count--;
-    }
-
-    void AddTail(T value)
-    {
-        Elem<T>* temp = new Elem<T>{ value, nullptr, Tail };
-
-        if (Tail) Tail->next = temp;
-        else Head = temp;
-
-        Tail = temp;
-        Count++;
-    }
-
-    void AddHead(T value)
-    {
-        Elem<T>* temp = new Elem<T>{ value, Head, nullptr };
-
-        if (Head) Head->prev = temp;
-        else Tail = temp;
-
+        Node<T>* temp = new Node<T>{ value, Head };
         Head = temp;
         Count++;
     }
 
-    void Print() const
+    void pop()
     {
-        Elem<T>* temp = Head;
-        cout << "( ";
-        while (temp)
-        {
-            cout << temp->data << " ";
-            temp = temp->next;
-        }
-        cout << ")\n";
+        if (isEmpty()) return;
+
+        Node<T>* temp = Head;
+        Head = Head->next;
+        delete temp;
+        Count--;
     }
 
-    // оператор присваивания
-    List<T>& operator=(const List<T>& L)
+    T top() const
     {
-        if (this == &L) return *this;
+        if (isEmpty())
+            throw runtime_error("Stack is empty");
 
-        DelAll();
-        Elem<T>* temp = L.Head;
+        return Head->data;
+    }
 
-        while (temp)
+    void clear()
+    {
+        while (!isEmpty())
+            pop();
+    }
+
+    Stack<T>& operator=(const Stack<T>& S)
+    {
+        if (this == &S) return *this;
+
+        clear();
+
+        Stack<T> tmp;
+        Node<T>* cur = S.Head;
+
+        while (cur)
         {
-            AddTail(temp->data);
-            temp = temp->next;
+            tmp.push(cur->data);
+            cur = cur->next;
+        }
+
+        while (!tmp.isEmpty())
+        {
+            push(tmp.top());
+            tmp.pop();
         }
 
         return *this;
     }
 
-    // сложение списков
-    List<T> operator+(const List<T>& L) const
+    void print() const
     {
-        List<T> res(*this);
-        Elem<T>* temp = L.Head;
-
+        Node<T>* temp = Head;
+        cout << "Top -> ";
         while (temp)
         {
-            res.AddTail(temp->data);
+            cout << temp->data << " ";
             temp = temp->next;
         }
-
-        return res;
-    }
-
-    // переворот списка
-    List<T> operator-() const
-    {
-        List<T> res;
-        Elem<T>* temp = Head;
-
-        while (temp)
-        {
-            res.AddHead(temp->data);
-            temp = temp->next;
-        }
-
-        return res;
+        cout << endl;
     }
 };
 
 int main()
 {
-    List<int> L;
+    Stack<int> S;
 
-    for (int i = 0; i < 10; i++)
-        (i % 2 == 0) ? L.AddHead(i) : L.AddTail(i);
+    S.push(10);
+    S.push(20);
+    S.push(30);
 
-    L.Print();
+    S.print();   
 
-    List<int> T = L;
-    List<int> Sum = -L + T;
+    S.pop();
+    S.print();   
 
-    Sum.Print();
+    cout << "Top element: " << S.top() << endl;
+
+    Stack<int> S2 = S;
+    S2.print();
 }
